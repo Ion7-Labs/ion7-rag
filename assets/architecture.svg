@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14">
+  <style>
+    .box      { fill: none; stroke: #6b7280; stroke-width: 1.5; rx: 8; ry: 8; }
+    .box-app  { fill: #eef2ff; stroke: #4f46e5; }
+    .box-rag  { fill: #fef3c7; stroke: #d97706; }
+    .box-llm  { fill: #f0fdf4; stroke: #16a34a; }
+    .box-store{ fill: #ecfeff; stroke: #0891b2; }
+    .label    { fill: #1f2937; font-weight: 600; }
+    .sub      { fill: #4b5563; font-size: 12px; }
+    .arrow    { stroke: #6b7280; stroke-width: 1.5; fill: none; marker-end: url(#tip); }
+    .arrow-down { stroke: #9ca3af; stroke-width: 1.2; stroke-dasharray: 4 3; fill: none; marker-end: url(#tip); }
+    @media (prefers-color-scheme: dark) {
+      .box      { stroke: #9ca3af; }
+      .box-app  { fill: #1e1b4b; stroke: #818cf8; }
+      .box-rag  { fill: #422006; stroke: #fbbf24; }
+      .box-llm  { fill: #14532d; stroke: #4ade80; }
+      .box-store{ fill: #083344; stroke: #22d3ee; }
+      .label    { fill: #e5e7eb; }
+      .sub      { fill: #9ca3af; }
+      .arrow, .arrow-down { stroke: #9ca3af; }
+    }
+  </style>
+
+  <defs>
+    <marker id="tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <!-- Tier 1 : user application -->
+  <rect class="box box-app" x="160" y="20" width="400" height="60"/>
+  <text class="label" x="360" y="50" text-anchor="middle">Your Lua application</text>
+  <text class="sub"   x="360" y="68" text-anchor="middle">CLI prompt-and-answer · agentic workflow · batch ingest job</text>
+
+  <!-- Tier 2 : ion7.rag -->
+  <rect class="box box-rag" x="40" y="120" width="640" height="170"/>
+  <text class="label" x="360" y="148" text-anchor="middle">ion7.rag   ·   RAG pipeline</text>
+  <text class="sub"   x="360" y="170" text-anchor="middle">Pipeline  ·  retrieve  ·  embed  ·  hype  ·  agent (CRAG · Self-RAG)</text>
+  <text class="sub"   x="360" y="190" text-anchor="middle">loader (text · markdown · html)  ·  chunk (recursive · late)</text>
+  <text class="sub"   x="360" y="210" text-anchor="middle">context (Anthropic Contextual Retrieval)  ·  rerank (pointwise)</text>
+  <text class="sub"   x="360" y="230" text-anchor="middle">fusion (rrf · dbsf · cc)  ·  route (tfidf)</text>
+  <text class="sub"   x="360" y="250" text-anchor="middle">eval (faithfulness · context_precision · lynx)</text>
+  <text class="sub"   x="360" y="270" text-anchor="middle">db (chunks · vec · lex · hype · schema)  ·  util (log)</text>
+
+  <!-- Tier 3 : ion7 substrate -->
+  <rect class="box box-llm" x="40" y="330" width="640" height="100"/>
+  <text class="label" x="360" y="358" text-anchor="middle">ion7.core   ·   ion7.llm   ·   ion7.grammar</text>
+  <text class="sub"   x="360" y="380" text-anchor="middle">embeddings · reranker scoring · samplers · KV primitives · chat templates</text>
+  <text class="sub"   x="360" y="398" text-anchor="middle">Engine · Pool · ContextManager · RadixAttention prefix cache</text>
+  <text class="sub"   x="360" y="416" text-anchor="middle">JSON-Schema → GBNF for grammar-constrained reflection / listwise outputs</text>
+
+  <!-- Tier 4 : storage substrate -->
+  <rect class="box box-store" x="80" y="460" width="560" height="60"/>
+  <text class="label" x="360" y="488" text-anchor="middle">SQLite   +   sqlite-vec   +   FTS5</text>
+  <text class="sub"   x="360" y="508" text-anchor="middle">chunks.db (canonical truth)   +   index.db (vec0 + bm25 + hype, rebuildable)</text>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M 360 80 L 360 118"/>
+  <path class="arrow" d="M 360 290 L 360 328"/>
+  <path class="arrow-down" d="M 360 430 L 360 458"/>
+</svg>

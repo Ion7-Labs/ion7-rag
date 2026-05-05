@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 600" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13">
+  <style>
+    .box        { fill: none; stroke: #6b7280; stroke-width: 1.4; rx: 6; ry: 6; }
+    .box-step   { fill: #fef3c7; stroke: #d97706; }
+    .box-data   { fill: #ecfeff; stroke: #0891b2; }
+    .box-decide { fill: #f0fdf4; stroke: #16a34a; }
+    .box-warn   { fill: #fee2e2; stroke: #dc2626; }
+    .box-out    { fill: #fdf2f8; stroke: #db2777; }
+    .box-gram   { fill: #fdf4ff; stroke: #9333ea; }
+    .label      { fill: #1f2937; font-weight: 600; }
+    .sub        { fill: #4b5563; font-size: 11px; }
+    .group      { fill: #1f2937; font-weight: 700; font-size: 13px; }
+    .arrow      { stroke: #6b7280; stroke-width: 1.4; fill: none; marker-end: url(#tip); }
+    .arrow-back { stroke: #dc2626; stroke-width: 1.4; fill: none; marker-end: url(#tip-r); stroke-dasharray: 5 3; }
+    .arrow-skip { stroke: #16a34a; stroke-width: 1.4; fill: none; marker-end: url(#tip-g); stroke-dasharray: 5 3; }
+    @media (prefers-color-scheme: dark) {
+      .box        { stroke: #9ca3af; }
+      .box-step   { fill: #422006; stroke: #fbbf24; }
+      .box-data   { fill: #083344; stroke: #22d3ee; }
+      .box-decide { fill: #14532d; stroke: #4ade80; }
+      .box-warn   { fill: #450a0a; stroke: #f87171; }
+      .box-out    { fill: #500724; stroke: #f472b6; }
+      .box-gram   { fill: #4a044e; stroke: #d946ef; }
+      .label      { fill: #e5e7eb; }
+      .sub, .group{ fill: #d1d5db; }
+      .arrow      { stroke: #9ca3af; }
+      .arrow-back { stroke: #f87171; }
+      .arrow-skip { stroke: #4ade80; }
+    }
+  </style>
+
+  <defs>
+    <marker id="tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="tip-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/>
+    </marker>
+    <marker id="tip-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+  </defs>
+
+  <!-- ── CRAG ── -->
+  <text class="group" x="20" y="28">agent.crag — corrective control loop (wraps a Pipeline)</text>
+
+  <rect class="box box-step" x="30" y="50" width="170" height="50"/>
+  <text class="label" x="115" y="72" text-anchor="middle">query</text>
+  <text class="sub"   x="115" y="88" text-anchor="middle">user question</text>
+
+  <rect class="box box-step" x="220" y="50" width="200" height="50"/>
+  <text class="label" x="320" y="72" text-anchor="middle">pipeline:retrieve</text>
+  <text class="sub"   x="320" y="88" text-anchor="middle">dense + lex + (hype) → fuse</text>
+
+  <rect class="box box-data" x="440" y="50" width="220" height="50"/>
+  <text class="label" x="550" y="72" text-anchor="middle">reranker:score top-K</text>
+  <text class="sub"   x="550" y="88" text-anchor="middle">logp(yes) - logp(no) per hit</text>
+
+  <rect class="box box-decide" x="680" y="50" width="240" height="50"/>
+  <text class="label" x="800" y="72" text-anchor="middle">confidence band</text>
+  <text class="sub"   x="800" y="88" text-anchor="middle">high  ·  mixed  ·  low</text>
+
+  <!-- low → reformulate → loop -->
+  <rect class="box box-warn" x="350" y="140" width="280" height="56"/>
+  <text class="label" x="490" y="162" text-anchor="middle">low : reformulate query  →  retry</text>
+  <text class="sub"   x="490" y="180" text-anchor="middle">answerer engine · max_retries cap</text>
+
+  <!-- answer -->
+  <rect class="box box-out" x="280" y="220" width="420" height="60"/>
+  <text class="label" x="490" y="244" text-anchor="middle">answer with re-scored hits  +  caveat on mixed / exhausted-low</text>
+  <text class="sub"   x="490" y="262" text-anchor="middle">Pipeline answer template · Response { content, … }</text>
+
+  <!-- arrows CRAG -->
+  <path class="arrow" d="M 200 75 L 218 75"/>
+  <path class="arrow" d="M 420 75 L 438 75"/>
+  <path class="arrow" d="M 660 75 L 678 75"/>
+  <path class="arrow-back" d="M 800 100 L 800 122 L 490 122 L 490 138"/>
+  <path class="arrow-back" d="M 350 168 L 320 168 L 320 100"/>
+  <path class="arrow-skip" d="M 800 100 L 800 220 L 700 240"/>
+  <path class="arrow" d="M 490 196 L 490 218"/>
+
+  <!-- ── Self-RAG ── -->
+  <text class="group" x="20" y="330">agent.self_rag — reflective control loop (grammar-constrained JSON via ion7-grammar)</text>
+
+  <rect class="box box-step" x="30" y="350" width="170" height="50"/>
+  <text class="label" x="115" y="372" text-anchor="middle">query</text>
+  <text class="sub"   x="115" y="388" text-anchor="middle">user question</text>
+
+  <rect class="box box-gram" x="220" y="350" width="240" height="50"/>
+  <text class="label" x="340" y="372" text-anchor="middle">retrieve_decision</text>
+  <text class="sub"   x="340" y="388" text-anchor="middle">{ retrieve : bool, rationale }</text>
+
+  <!-- no-retrieve branch -->
+  <rect class="box box-out" x="500" y="350" width="200" height="50"/>
+  <text class="label" x="600" y="372" text-anchor="middle">direct answer</text>
+  <text class="sub"   x="600" y="388" text-anchor="middle">no retrieval call</text>
+
+  <!-- retrieve branch -->
+  <rect class="box box-step" x="220" y="430" width="200" height="50"/>
+  <text class="label" x="320" y="452" text-anchor="middle">pipeline:retrieve</text>
+  <text class="sub"   x="320" y="468" text-anchor="middle">dense + lex + (hype) → fuse</text>
+
+  <rect class="box box-gram" x="440" y="430" width="240" height="50"/>
+  <text class="label" x="560" y="452" text-anchor="middle">relevance_grade  (per hit)</text>
+  <text class="sub"   x="560" y="468" text-anchor="middle">{ relevant : bool, rationale }</text>
+
+  <rect class="box box-warn" x="700" y="430" width="220" height="50"/>
+  <text class="label" x="810" y="452" text-anchor="middle">drop irrelevant</text>
+  <text class="sub"   x="810" y="468" text-anchor="middle">fallback to all if &lt; min_relevant</text>
+
+  <rect class="box box-out" x="220" y="510" width="320" height="60"/>
+  <text class="label" x="380" y="534" text-anchor="middle">answer with kept hits</text>
+  <text class="sub"   x="380" y="552" text-anchor="middle">Pipeline answer template</text>
+
+  <rect class="box box-gram" x="580" y="510" width="340" height="60"/>
+  <text class="label" x="750" y="534" text-anchor="middle">support_grade  (post-answer audit)</text>
+  <text class="sub"   x="750" y="552" text-anchor="middle">{ supported : "full" | "partial" | "none", rationale }</text>
+
+  <!-- arrows Self-RAG -->
+  <path class="arrow" d="M 200 375 L 218 375"/>
+  <path class="arrow-skip" d="M 460 375 L 498 375"/>
+  <path class="arrow" d="M 340 400 L 340 428"/>
+  <path class="arrow" d="M 420 455 L 438 455"/>
+  <path class="arrow" d="M 680 455 L 698 455"/>
+  <path class="arrow" d="M 560 480 L 560 500 L 380 500 L 380 508"/>
+  <path class="arrow" d="M 540 540 L 578 540"/>
+</svg>
