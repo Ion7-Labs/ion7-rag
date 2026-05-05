@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 540" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13">
+  <style>
+    .box       { fill: none; stroke: #6b7280; stroke-width: 1.4; rx: 6; ry: 6; }
+    .box-step  { fill: #fef3c7; stroke: #d97706; }
+    .box-data  { fill: #ecfeff; stroke: #0891b2; }
+    .box-fuse  { fill: #f0fdf4; stroke: #16a34a; }
+    .box-rerank{ fill: #fff7ed; stroke: #ea580c; }
+    .box-out   { fill: #fdf2f8; stroke: #db2777; }
+    .box-opt   { fill: #f5f5f4; stroke: #78716c; stroke-dasharray: 4 3; }
+    .label     { fill: #1f2937; font-weight: 600; }
+    .sub       { fill: #4b5563; font-size: 11px; }
+    .group     { fill: #1f2937; font-weight: 700; font-size: 12px; }
+    .arrow     { stroke: #6b7280; stroke-width: 1.4; fill: none; marker-end: url(#tip); }
+    .arrow-opt { stroke: #9ca3af; stroke-width: 1.2; stroke-dasharray: 4 3; fill: none; marker-end: url(#tip); }
+    @media (prefers-color-scheme: dark) {
+      .box       { stroke: #9ca3af; }
+      .box-step  { fill: #422006; stroke: #fbbf24; }
+      .box-data  { fill: #083344; stroke: #22d3ee; }
+      .box-fuse  { fill: #14532d; stroke: #4ade80; }
+      .box-rerank{ fill: #431407; stroke: #fb923c; }
+      .box-out   { fill: #500724; stroke: #f472b6; }
+      .box-opt   { fill: #1c1917; stroke: #a8a29e; }
+      .label     { fill: #e5e7eb; }
+      .sub, .group { fill: #d1d5db; }
+      .arrow     { stroke: #9ca3af; }
+      .arrow-opt { stroke: #6b7280; }
+    }
+  </style>
+
+  <defs>
+    <marker id="tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <text class="group" x="20" y="24">Pipeline:retrieve  ·  Pipeline:ask — query hot path</text>
+
+  <!-- Query -->
+  <rect class="box box-step" x="30" y="60" width="200" height="60"/>
+  <text class="label" x="130" y="86" text-anchor="middle">query string</text>
+  <text class="sub"   x="130" y="104" text-anchor="middle">caller-supplied</text>
+
+  <!-- Optional route -->
+  <rect class="box box-opt" x="260" y="60" width="220" height="60"/>
+  <text class="label" x="370" y="86" text-anchor="middle">route.tfidf  (optional)</text>
+  <text class="sub"   x="370" y="104" text-anchor="middle">no_retrieve / single_hop / multi_hop</text>
+
+  <!-- Embed -->
+  <rect class="box box-step" x="510" y="60" width="220" height="60"/>
+  <text class="label" x="620" y="86" text-anchor="middle">embed.encode_query</text>
+  <text class="sub"   x="620" y="104" text-anchor="middle">ion7-core embedder Context</text>
+
+  <!-- Fan out -->
+  <rect class="box box-data" x="60" y="170" width="240" height="76"/>
+  <text class="label" x="180" y="194" text-anchor="middle">db.vec.knn</text>
+  <text class="sub"   x="180" y="212" text-anchor="middle">binary 192-d shortlist</text>
+  <text class="sub"   x="180" y="226" text-anchor="middle">→ fp32 1024-d rerank tier</text>
+  <text class="sub"   x="180" y="240" text-anchor="middle">Hamming brute force</text>
+
+  <rect class="box box-data" x="340" y="170" width="240" height="76"/>
+  <text class="label" x="460" y="194" text-anchor="middle">db.lex.search</text>
+  <text class="sub"   x="460" y="212" text-anchor="middle">FTS5 BM25 over</text>
+  <text class="sub"   x="460" y="226" text-anchor="middle">coalesce(contextual_text,</text>
+  <text class="sub"   x="460" y="240" text-anchor="middle">raw_text)</text>
+
+  <rect class="box box-data" x="620" y="170" width="240" height="76"/>
+  <text class="label" x="740" y="194" text-anchor="middle">db.hype.knn  (optional)</text>
+  <text class="sub"   x="740" y="212" text-anchor="middle">vec0 over hypothetical</text>
+  <text class="sub"   x="740" y="226" text-anchor="middle">questions per chunk</text>
+  <text class="sub"   x="740" y="240" text-anchor="middle">surfaced as a 3rd source</text>
+
+  <!-- Fuse -->
+  <rect class="box box-fuse" x="280" y="290" width="380" height="68"/>
+  <text class="label" x="470" y="316" text-anchor="middle">fusion  (rrf · dbsf · cc)</text>
+  <text class="sub"   x="470" y="334" text-anchor="middle">per-source weights · 4:1 dense:lex prior</text>
+  <text class="sub"   x="470" y="348" text-anchor="middle">→ Hit[] sorted by descending score</text>
+
+  <!-- Rerank -->
+  <rect class="box box-rerank" x="280" y="390" width="380" height="68"/>
+  <text class="label" x="470" y="416" text-anchor="middle">rerank.pointwise  (optional)</text>
+  <text class="sub"   x="470" y="434" text-anchor="middle">logp(yes) - logp(no) per hit</text>
+  <text class="sub"   x="470" y="448" text-anchor="middle">re-sort top-K by reranker score</text>
+
+  <!-- Output paths -->
+  <rect class="box box-out" x="30" y="490" width="380" height="40"/>
+  <text class="label" x="220" y="514" text-anchor="middle">retrieve  →  Hit[] (chunk_id, score, raw_text, …)</text>
+
+  <rect class="box box-out" x="530" y="490" width="380" height="40"/>
+  <text class="label" x="720" y="514" text-anchor="middle">ask  →  augmenter + answerer Engine  →  Response</text>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M 230 90 L 258 90"/>
+  <path class="arrow-opt" d="M 480 90 L 508 90"/>
+  <path class="arrow" d="M 620 120 L 620 140 L 180 140 L 180 168"/>
+  <path class="arrow" d="M 620 140 L 460 140 L 460 168"/>
+  <path class="arrow" d="M 620 140 L 740 140 L 740 168"/>
+  <path class="arrow" d="M 180 246 L 180 270 L 470 270 L 470 288"/>
+  <path class="arrow" d="M 460 246 L 460 288"/>
+  <path class="arrow" d="M 740 246 L 740 270 L 470 270"/>
+  <path class="arrow-opt" d="M 470 358 L 470 388"/>
+  <path class="arrow" d="M 380 458 L 220 488"/>
+  <path class="arrow" d="M 560 458 L 720 488"/>
+</svg>

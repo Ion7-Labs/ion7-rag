@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 540" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13">
+  <style>
+    .box        { fill: none; stroke: #6b7280; stroke-width: 1.4; rx: 8; ry: 8; }
+    .box-handle { fill: #eef2ff; stroke: #4f46e5; }
+    .box-truth  { fill: #ecfeff; stroke: #0891b2; }
+    .box-index  { fill: #fdf4ff; stroke: #9333ea; }
+    .box-table  { fill: #ffffff; stroke: #6b7280; rx: 4; ry: 4; }
+    .box-meta   { fill: #f5f5f4; stroke: #78716c; rx: 4; ry: 4; }
+    .label      { fill: #1f2937; font-weight: 600; }
+    .sub        { fill: #4b5563; font-size: 11px; }
+    .col        { fill: #4b5563; font-size: 10px; font-family: ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace; }
+    .group      { fill: #1f2937; font-weight: 700; font-size: 12px; }
+    .arrow      { stroke: #6b7280; stroke-width: 1.4; fill: none; marker-end: url(#tip); }
+    .arrow-att  { stroke: #9333ea; stroke-width: 1.4; stroke-dasharray: 5 3; fill: none; marker-end: url(#tip-p); }
+    @media (prefers-color-scheme: dark) {
+      .box        { stroke: #9ca3af; }
+      .box-handle { fill: #1e1b4b; stroke: #818cf8; }
+      .box-truth  { fill: #083344; stroke: #22d3ee; }
+      .box-index  { fill: #4a044e; stroke: #d946ef; }
+      .box-table  { fill: #18181b; stroke: #9ca3af; }
+      .box-meta   { fill: #1c1917; stroke: #a8a29e; }
+      .label      { fill: #e5e7eb; }
+      .sub, .col  { fill: #d1d5db; }
+      .group      { fill: #e5e7eb; }
+      .arrow      { stroke: #9ca3af; }
+      .arrow-att  { stroke: #d946ef; }
+    }
+  </style>
+
+  <defs>
+    <marker id="tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="tip-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9333ea"/>
+    </marker>
+  </defs>
+
+  <text class="group" x="20" y="28">db.open(chunks_path, index_path) → Handle  ·  one connection, two databases via ATTACH</text>
+
+  <!-- Handle -->
+  <rect class="box box-handle" x="370" y="50" width="200" height="60"/>
+  <text class="label" x="470" y="76" text-anchor="middle">db.Handle</text>
+  <text class="sub"   x="470" y="92" text-anchor="middle">exec · prepare · transaction</text>
+  <text class="sub"   x="470" y="106" text-anchor="middle">sqlite-vec extension loaded</text>
+
+  <!-- chunks.db (truth) -->
+  <rect class="box box-truth" x="40" y="160" width="400" height="340"/>
+  <text class="label" x="240" y="186" text-anchor="middle">chunks.db   ·   main</text>
+  <text class="sub"   x="240" y="204" text-anchor="middle">canonical truth · source of truth · backed up, never disposed</text>
+
+  <rect class="box box-meta" x="60" y="220" width="360" height="48"/>
+  <text class="label" x="240" y="240" text-anchor="middle">meta</text>
+  <text class="col"   x="240" y="258" text-anchor="middle">key TEXT PK · value TEXT</text>
+
+  <rect class="box box-table" x="60" y="280" width="360" height="80"/>
+  <text class="label" x="240" y="300" text-anchor="middle">docs</text>
+  <text class="col"   x="240" y="318" text-anchor="middle">id INTEGER PK · source_uri · format · title</text>
+  <text class="col"   x="240" y="334" text-anchor="middle">meta_json · ingested_at</text>
+  <text class="col"   x="240" y="350" text-anchor="middle">UNIQUE INDEX (doc_id text key)</text>
+
+  <rect class="box box-table" x="60" y="372" width="360" height="120"/>
+  <text class="label" x="240" y="392" text-anchor="middle">chunks</text>
+  <text class="col"   x="240" y="410" text-anchor="middle">id INTEGER PK · doc_id · ord</text>
+  <text class="col"   x="240" y="426" text-anchor="middle">section · char_start · char_end</text>
+  <text class="col"   x="240" y="442" text-anchor="middle">raw_text</text>
+  <text class="col"   x="240" y="458" text-anchor="middle">contextual_text  (nullable, set when</text>
+  <text class="col"   x="240" y="472" text-anchor="middle">Anthropic Contextual Retrieval is on)</text>
+  <text class="col"   x="240" y="487" text-anchor="middle">n_tokens</text>
+
+  <!-- index.db (rebuildable) -->
+  <rect class="box box-index" x="500" y="160" width="400" height="340"/>
+  <text class="label" x="700" y="186" text-anchor="middle">index.db   ·   ATTACHed as idx</text>
+  <text class="sub"   x="700" y="204" text-anchor="middle">disposable · fully rebuildable from chunks.db</text>
+
+  <rect class="box box-table" x="520" y="220" width="360" height="80"/>
+  <text class="label" x="700" y="240" text-anchor="middle">idx.chunks_vec   ·   sqlite-vec virtual</text>
+  <text class="col"   x="700" y="258" text-anchor="middle">chunk_id INTEGER PK</text>
+  <text class="col"   x="700" y="274" text-anchor="middle">vec_bin   bit(192)   binary shortlist (Hamming)</text>
+  <text class="col"   x="700" y="290" text-anchor="middle">vec_full  float[1024]   fp32 rerank tier</text>
+
+  <rect class="box box-table" x="520" y="312" width="360" height="76"/>
+  <text class="label" x="700" y="332" text-anchor="middle">idx.chunks_fts   ·   FTS5 contentless</text>
+  <text class="col"   x="700" y="350" text-anchor="middle">indexes coalesce(contextual_text, raw_text)</text>
+  <text class="col"   x="700" y="366" text-anchor="middle">BM25 default · trigram tokenizer optional</text>
+  <text class="col"   x="700" y="382" text-anchor="middle">join back via chunk_id rowid</text>
+
+  <rect class="box box-table" x="520" y="400" width="360" height="92"/>
+  <text class="label" x="700" y="420" text-anchor="middle">idx.hype_vec   ·   sqlite-vec aux columns</text>
+  <text class="col"   x="700" y="438" text-anchor="middle">id INTEGER PK · chunk_id · q_index</text>
+  <text class="col"   x="700" y="454" text-anchor="middle">question_text aux column</text>
+  <text class="col"   x="700" y="470" text-anchor="middle">vec_full float[1024] hypothetical-question vector</text>
+  <text class="col"   x="700" y="486" text-anchor="middle">HyPE Option B (per-question rows)</text>
+
+  <!-- Connectors -->
+  <path class="arrow" d="M 470 110 L 470 130 L 240 130 L 240 158"/>
+  <path class="arrow-att" d="M 470 110 L 470 130 L 700 130 L 700 158"/>
+</svg>

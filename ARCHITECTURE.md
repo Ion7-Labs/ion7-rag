@@ -7,6 +7,10 @@ users. The user-facing API surface lives in [`README.md`](README.md).
 
 ## 1. Layered overview
 
+<div align="center">
+  <img src="assets/architecture.svg" alt="Layered architecture" width="640"/>
+</div>
+
 Four tiers, top to bottom :
 
 1. **Your Lua application.** Anything from a 30-line CLI prompt-and-answer
@@ -43,6 +47,10 @@ Four tiers, top to bottom :
 ---
 
 ## 2. Module organisation
+
+<div align="center">
+  <img src="assets/module-tree.svg" alt="Runtime module tree" width="900"/>
+</div>
 
 ```
 src/ion7/rag/
@@ -125,6 +133,10 @@ the unit-test surface large and the integration-test surface bounded.
 
 ## 3. The two-DB schema
 
+<div align="center">
+  <img src="assets/two-db.svg" alt="Two-DB SQLite schema" width="900"/>
+</div>
+
 The truth tier (`chunks.db`) and the index tier (`index.db`) are kept in
 separate files so the index can be nuked and rebuilt from scratch
 without touching the canonical chunk text or its provenance ledger.
@@ -159,6 +171,10 @@ through CAST clauses where vec0 demands it.
 ---
 
 ## 4. The retrieval hot path
+
+<div align="center">
+  <img src="assets/hot-path.svg" alt="Retrieval hot path" width="900"/>
+</div>
 
 `Pipeline:retrieve(query, opts)` runs in five steps :
 
@@ -196,6 +212,10 @@ which downstream embedders and FTS pick up via
 ---
 
 ## 6. Generation-time agentic loops
+
+<div align="center">
+  <img src="assets/agents.svg" alt="CRAG and Self-RAG control loops" width="900"/>
+</div>
 
 Both agents wrap an existing `Pipeline` and never mutate it.
 

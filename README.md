@@ -8,6 +8,8 @@
 [![LuaJIT 2.1](https://img.shields.io/badge/LuaJIT-2.1-orange.svg)](https://luajit.org/)
 [![Status: alpha](https://img.shields.io/badge/status-alpha-yellow.svg)](#status)
 
+<img src="assets/architecture.svg" alt="ion7-rag architecture" width="640"/>
+
 </div>
 
 ---
