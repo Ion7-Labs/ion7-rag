@@ -18,12 +18,13 @@ description = {
 
         Storage substrate : sqlite-vec (dense vectors) + SQLite FTS5 (BM25)
         across two SQLite files — chunks.db (canonical text + metadata) and
-        index.db (disposable vectors + lexical index).
+        index.db (disposable vectors + lexical index + HyPE aux tier).
 
-        v1 scope follows the shortlist in RESEARCH.md : recursive chunking,
-        Anthropic Contextual Retrieval, hybrid retrieval with RRF / DBSF /
-        CC fusion, cross-encoder reranking, HyPE, adaptive query routing,
-        CRAG default agentic loop, RAGAs-style evaluation.
+        Surface : recursive and late chunkers, Anthropic Contextual
+        Retrieval, hybrid retrieval with RRF / DBSF / CC fusion,
+        pointwise yes/no reranker, HyPE Option B, TF-IDF query router,
+        CRAG and Self-RAG agents, RAGAs-style evaluation
+        (Faithfulness, ContextPrecision, Lynx).
 
         Library, not a server. No HTTP, no SSE, no CLI binary.
     ]],

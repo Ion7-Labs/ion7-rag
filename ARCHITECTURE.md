@@ -1,12 +1,7 @@
 # ion7-rag architecture
 
 The technical decisions behind ion7-rag, aimed at contributors and curious
-users. The user-facing API surface lives in [`README.md`](README.md) ; the
-v1 plan and the literature it is grounded in live in [`RESEARCH.md`](RESEARCH.md).
-
-This document is a **living draft** that grows phase by phase as the v1
-plan ships. v0.1.0-alpha1 covers only sections 1, 2 and 8 ; the others
-are scaffolded so future PRs can fill them in without restructuring.
+users. The user-facing API surface lives in [`README.md`](README.md).
 
 ---
 
@@ -20,30 +15,28 @@ Four tiers, top to bottom :
    long-running server processes.
 
 2. **`ion7.rag` — the RAG pipeline.** Pure Lua. Owns five families :
-   - **Ingestion** : `loader/*` (text, markdown, html ; v1.1 will add
-     eml, json, pdf), `chunk/*` (recursive default ; meta and late
-     chunkers as opt-ins).
+   - **Ingestion** : `loader/*` (text, markdown via cmark, html via
+     gumbo), `chunk/*` (recursive default and late chunker).
    - **Storage** : `db/*` over two SQLite files — `chunks.db` for the
-     canonical text and metadata ; `index.db` for sqlite-vec dense and
-     FTS5 lexical indexes, ATTACHed as `idx`.
+     canonical text and metadata ; `index.db` for sqlite-vec dense, FTS5
+     lexical, and HyPE vec0 indexes, ATTACHed as `idx`.
    - **Contextual Retrieval** : `context/*` runs a small contextualizer
-     model on a dedicated `ion7-llm.Pool`, prepending 50-100 tokens of
+     model on top of `ion7-llm.Engine`, prepending 50–100 tokens of
      document-level context to each chunk before embedding and FTS
      indexing.
-   - **Retrieval and reranking** : `retrieve.lua` glue, `fusion/*`
-     (RRF, DBSF, CC), `rerank/*` (cross-encoder default, listwise
-     opt-in via ion7-grammar), `route/*` (TF-IDF + classifier baseline).
-   - **Generation-time** : `agent/*` (CRAG default, Self-RAG opt-in),
-     `pipeline.lua` glue, `eval/*` (RAGAs metrics + Lynx hallucination).
+   - **Retrieval and reranking** : `retrieve.lua` glue, `fusion/*` (RRF,
+     DBSF, CC), `rerank/*` (pointwise yes/no logprob judge), `route/*`
+     (TF-IDF + per-class centroid classifier).
+   - **Generation-time** : `agent/*` (CRAG and Self-RAG), `pipeline.lua`
+     orchestrator, `eval/*` (Faithfulness, ContextPrecision, Lynx).
 
 3. **`ion7.core`, `ion7.llm`, `ion7.grammar` — the substrate.**
    ion7-rag is a strict consumer. Embeddings and reranker scoring go
    through ion7-core ; the contextualizer and answer generation go
-   through ion7-llm ; constrained-output paths (Self-RAG reflection,
-   listwise reranker permutations, future KG-extraction) go through
-   ion7-grammar's GBNF.
+   through ion7-llm ; constrained-output paths (Self-RAG reflection
+   tokens) go through ion7-grammar's GBNF.
 
-4. **SQLite + sqlite-vec + FTS5.** Single-machine substrate. brute-force
+4. **SQLite + sqlite-vec + FTS5.** Single-machine substrate. Brute-force
    on binary-quantized vectors handles up to ~10M chunks comfortably,
    well above the local-first niche ion7-rag targets.
 
@@ -56,66 +49,63 @@ src/ion7/rag/
 ├── init.lua            -- lazy façade : class registry + sub-namespaces
 │
 ├── loader/             -- ingestion : input format → normalized Doc
-│   ├── init.lua        -- common loader interface
+│   ├── init.lua        -- format detection + loader registry
 │   ├── text.lua        -- passthrough
-│   ├── markdown.lua    -- via cmark-lua
-│   └── html.lua        -- via lua-gumbo
-│   -- v1.1 : eml, json, pdf
+│   ├── markdown.lua    -- via cmark (sections from H1-H6 hierarchy)
+│   └── html.lua        -- via gumbo (sections from heading hierarchy)
 │
-├── chunk/              -- chunkers : Doc → chunks
-│   ├── init.lua
-│   ├── recursive.lua   -- default, LPeg-based 512-tok / 15-25% overlap
-│   ├── meta.lua        -- Meta-Chunking (perplexity), opt-in
-│   └── late.lua        -- late chunking, opt-in (needs per-token bridge)
+├── chunk/              -- chunkers : Doc → Chunk[]
+│   ├── init.lua        -- chunker registry
+│   ├── recursive.lua   -- separator-hierarchy splitter (default)
+│   └── late.lua        -- Günther late chunking via per-token embedder
 │
 ├── context/            -- Anthropic Contextual Retrieval
-│   ├── init.lua        -- ContextualEnricher
+│   ├── init.lua        -- Enricher class
 │   └── prompts.lua     -- contextualizer prompt templates
 │
 ├── db/                 -- two-DB SQLite store
-│   ├── init.lua        -- open + ATTACH idx, schema migrations
-│   ├── schema.lua      -- versioned migrations
-│   ├── chunks.lua      -- chunks.db tables (chunks, docs, citations)
+│   ├── init.lua        -- open + ATTACH idx, sqlite-vec extension load
+│   ├── schema.lua      -- versioned migrations + meta table
+│   ├── chunks.lua      -- main.docs / main.chunks (canonical truth)
 │   ├── vec.lua         -- idx.chunks_vec (sqlite-vec : binary + fp32)
-│   └── lex.lua         -- idx.chunks_fts (FTS5 contentless)
+│   ├── lex.lua         -- idx.chunks_fts (FTS5 contentless BM25)
+│   └── hype.lua        -- idx.hype_vec (HyPE Option B aux columns)
+│
+├── embed.lua           -- query / chunk embedding via ion7-core
+├── hype.lua            -- HyPE Generator : per-chunk hypothetical
+│                          questions for retrieval-time alignment
+│
+├── retrieve.lua        -- glue : embed query → vec + lex + hype → fuse
 │
 ├── fusion/             -- hybrid retrieval fusion
-│   ├── init.lua
-│   ├── rrf.lua         -- default
+│   ├── init.lua        -- strategy registry
+│   ├── rrf.lua         -- reciprocal rank fusion
 │   ├── dbsf.lua        -- distribution-based score fusion
-│   └── cc.lua          -- convex combination
-│
-├── retrieve.lua        -- glue : route → embed query → vec+lex → fuse
+│   └── cc.lua          -- min-max convex combination
 │
 ├── rerank/
-│   ├── init.lua
-│   ├── crossenc.lua    -- Qwen3-Reranker-0.6B via ion7-core
-│   └── listwise.lua    -- LLM listwise via ion7-grammar (opt-in)
+│   ├── init.lua        -- reranker registry
+│   └── pointwise.lua   -- LLM yes/no logprob judge (Qwen3-Reranker style)
 │
 ├── route/              -- adaptive query routing
-│   ├── init.lua
-│   ├── tfidf.lua       -- TF-IDF + tiny classifier (RAGRouter-Bench baseline)
-│   └── llm.lua         -- LLM zero-shot router via grammar (alt)
+│   ├── init.lua        -- router registry
+│   └── tfidf.lua       -- TF-IDF + per-class centroid classifier
 │
-├── hype.lua            -- HyPE ingestion : hypothetical questions per chunk
+├── agent/              -- generation-time RAG control loops
+│   ├── init.lua        -- agent registry
+│   ├── prompts.lua     -- shared reformulation / reflection prompts
+│   ├── crag.lua        -- Corrective RAG (Yan et al., 2024)
+│   └── self_rag.lua    -- reflection-token Self-RAG via ion7-grammar
 │
-├── agent/              -- generation-time RAG loops
-│   ├── init.lua
-│   ├── crag.lua        -- Corrective RAG, default
-│   └── self_rag.lua    -- reflection-token Self-RAG, opt-in
+├── eval/               -- reference-free RAGAs metrics
+│   ├── init.lua        -- metric registry
+│   ├── prompts.lua     -- judge prompt templates
+│   ├── faithfulness.lua    -- claims-grounded-in-contexts ratio
+│   ├── context_precision.lua -- rank-weighted relevance precision
+│   └── lynx.lua        -- Patronus Lynx PASS / FAIL judge
 │
-├── eval/               -- RAGAs metrics + hallucination scoring
-│   ├── init.lua
-│   ├── faithfulness.lua
-│   ├── relevancy.lua
-│   ├── context_precision.lua
-│   ├── context_recall.lua
-│   └── lynx.lua        -- Lynx-8B hallucination check
-│
-├── citation.lua        -- chunk → (doc_id, char_start, char_end)
-├── pipeline.lua        -- Pipeline.new / :ingest / :ask / :stream
+├── pipeline.lua        -- Pipeline.new / :ingest / :retrieve / :ask
 └── util/
-    ├── tokenize.lua    -- token counts via ion7-core Vocab
     └── log.lua         -- mirror of ion7.core.util.log
 ```
 
@@ -135,37 +125,99 @@ the unit-test surface large and the integration-test surface bounded.
 
 ## 3. The two-DB schema
 
-> *Section to be filled at phase 1.*
-
 The truth tier (`chunks.db`) and the index tier (`index.db`) are kept in
 separate files so the index can be nuked and rebuilt from scratch
 without touching the canonical chunk text or its provenance ledger.
 SQLite's `ATTACH DATABASE` makes them appear as one logical schema
 (`main` and `idx`) on the same connection.
 
+**`chunks.db` (main).**
+
+- `meta(key TEXT PK, value TEXT)` — schema version, ingest config.
+- `docs(id, source_uri, format, title, meta_json, ingested_at)` —
+  one row per ingested document.
+- `chunks(id, doc_id, ord, section, char_start, char_end, raw_text,
+  contextual_text, n_tokens)` — one row per chunk, ordered within doc.
+  `contextual_text` is non-null only when Contextual Retrieval is
+  enabled at ingest time.
+
+**`index.db` (idx).**
+
+- `idx.chunks_vec` — sqlite-vec virtual table with two embedding
+  columns : a 192-d binary shortlist for fast brute-force candidate
+  selection and a 1024-d fp32 column for the rerank tier.
+- `idx.chunks_fts` — FTS5 contentless table indexing
+  `coalesce(contextual_text, raw_text)` so BM25 sees the enriched
+  view when it exists.
+- `idx.hype_vec` — sqlite-vec aux table for HyPE Option B : one row per
+  hypothetical question, with chunk_id and question_index aux columns.
+
+The `Handle` returned by `db.open` exposes connection-level helpers
+(`exec`, `prepare`, `transaction`, `close`) and forwards strict typing
+through CAST clauses where vec0 demands it.
+
 ---
 
 ## 4. The retrieval hot path
 
-> *Section to be filled at phases 3-4.*
+`Pipeline:retrieve(query, opts)` runs in five steps :
+
+1. **Embed the query** through `embed.lua`. The embedder Context is
+   pinned for the life of the Pipeline.
+2. **Dense search** via `db.vec.knn_binary` — Hamming-distance brute force
+   over the 192-d binary column, returning the top-K candidate
+   `chunk_id`s.
+3. **Lex search** via `db.lex` — FTS5 BM25 over the same query string,
+   trigram tokenizer optional via `db.lex` opts.
+4. **HyPE search** (optional) via `db.hype.knn` — same query embedding
+   matched against the hypothetical-question vectors, surfaced as a
+   third source.
+5. **Fuse** via `fusion/*` — RRF (default), DBSF, or CC. Weights are
+   passed in opts ; the 4:1 dense:lex prior is the documented default.
+
+`Pipeline:ask(query)` extends this with a reranker pass (`rerank.Pointwise`
+when configured) and an answerer pass (`ion7-llm.Engine` with the
+augmentation template).
 
 ---
 
 ## 5. Contextual Retrieval
 
-> *Section to be filled at phase 5.*
+The contextualizer model lives behind a dedicated `ion7-llm.Engine`. For
+a document with N chunks, the document's full text is shared as a prefix
+across all N contextualization calls and ion7-llm's RadixAttention
+exact-match cache amortises the prefill cost.
 
-Sketch : the contextualizer model lives behind a dedicated
-`ion7-llm.Pool` ; for a document with N chunks, the document's full
-text is shared as a prefix across all N contextualization calls and
-ion7-llm's RadixAttention exact-match cache amortises the prefill cost
-to roughly 1× decode for the whole document.
+`Enricher:enrich_chunks(full_doc_text, chunks)` mutates each chunk in
+place by setting `chunk.contextual_text = "<context>\n\n<raw_text>"`,
+which downstream embedders and FTS pick up via
+`coalesce(contextual_text, raw_text)`.
 
 ---
 
 ## 6. Generation-time agentic loops
 
-> *Section to be filled at phase 8.*
+Both agents wrap an existing `Pipeline` and never mutate it.
+
+**CRAG** (`agent.crag`) — corrective. Retrieve → rerank-score the top-K
+candidates → bin into high / low / mixed confidence by score
+thresholds → on low confidence, reformulate the query through the
+answerer engine and retry up to `max_retries` times → answer through
+the Pipeline's existing answer template, with a confidence caveat
+appended on mixed / exhausted-low branches.
+
+**Self-RAG** (`agent.self_rag`) — reflective. Three reflection points,
+each returning a JSON object grammar-constrained via `ion7.grammar` :
+
+1. `retrieve_decision` — should this query hit the corpus at all ?
+2. `relevance_grade` — per-hit yes/no relevance check ; irrelevant
+   hits are dropped before generation, with a fallback to all hits if
+   too few survive.
+3. `support_grade` — post-answer audit : full / partial / none.
+
+Self-RAG's grammar uses the canonical DCCD-style sampler order
+(grammar → top_k → dist) so the grammar masks the full vocab before
+any candidate-pruning step shrinks the candidate set under it.
 
 ---
 
@@ -181,12 +233,12 @@ a fork, not a re-implementation. Concrete rules :
 2. **No external Lua dependencies for things ion7-core covers.** JSON,
    UTF-8, base64, log routing — all routed through `ion7.vendor.*` or
    `ion7.core.util.*`. Downstream consumers install the four ion7
-   modules + lsqlite3 + lpeg ; nothing else.
+   modules + `lsqlite3` + `lpeg` ; nothing else.
 3. **Contracts at the boundary.** When a feature requires a specific
    ion7-core or ion7-llm capability (e.g. per-token embedding output for
-   late chunking), the dependency is documented at the
-   call site and the upstream addition lands in that repository before
-   ion7-rag ships the consuming code.
+   late chunking via `Context:decode_for_embeddings` and
+   `Context:embedding_token_ptr`), the dependency is documented at
+   the call site.
 
 ---
 
